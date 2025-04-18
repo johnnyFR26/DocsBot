@@ -1,7 +1,7 @@
 const File = require("./src/read_file")
 
 ;(async () => {
-  const filePath = './csv/marco_2025.csv'
+  const filePath = './csv/abril_2025.csv'
   const users = await File.csvToJSON(filePath)
 
   users.forEach(user => {
@@ -23,6 +23,5 @@ const File = require("./src/read_file")
     Whatsapp: user.Whatsapp
   }))
 
-//   console.log(users)
-  console.log(usersWithInvalidNames.length)
+  console.log(users)
 })()

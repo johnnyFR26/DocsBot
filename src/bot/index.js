@@ -2,15 +2,21 @@ const { Client } = require('whatsapp-web.js');
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
+const File = require("../read_file")
+const cors = require('cors');
+
 
 const app = express();
+app.use(cors({
+    origin: '*'
+}));
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-const client = new Client();
+const whatsappClient = new Client();
 
 // Enviar o QR code via WebSocket
-client.on('qr', (qr) => {
+whatsappClient.on('qr', (qr) => {
     wss.clients.forEach((ws) => {
         if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'qr', qr }));
@@ -19,7 +25,7 @@ client.on('qr', (qr) => {
 });
 
 // Notificar quando o cliente estiver pronto
-client.on('ready', () => {
+whatsappClient.on('ready', () => {
     console.log('Client is ready!');
     wss.clients.forEach((ws) => {
         if (ws.readyState === WebSocket.OPEN) {
@@ -29,7 +35,7 @@ client.on('ready', () => {
 });
 
 // Escutar e enviar as mensagens recebidas via WebSocket
-client.on('message', message => {
+whatsappClient.on('message', message => {
     console.log(`Mensagem recebida: ${message.body}`);
     wss.clients.forEach((ws) => {
         if (ws.readyState === WebSocket.OPEN) {
@@ -50,7 +56,7 @@ wss.on('connection', (ws) => {
             const { message, phoneNumber } = messageData;
             const chatId = `${phoneNumber}@c.us`;  // Número de WhatsApp formatado
 
-            client.sendMessage(chatId, message).then(response => {
+            whatsappClient.sendMessage(chatId, message).then(response => {
                 console.log('Mensagem enviada com sucesso:', response);
                 ws.send(JSON.stringify({ type: 'status', message: 'Mensagem enviada com sucesso!' }));
             }).catch(err => {
@@ -62,8 +68,35 @@ wss.on('connection', (ws) => {
 });
 
 // Inicializar o cliente WhatsApp
-client.initialize();
+whatsappClient.initialize();
 
-server.listen(3000, () => {
-    console.log('Server running on port 3000');
+server.listen(5000, () => {
+    console.log('Server running on port 5000');
 });
+
+(async () => {
+    const filePath = './csv/abril_2025.csv'
+    const users = await File.csvToJSON(filePath)
+    users.forEach(user => {
+        const finalizado = user.Finalizado.trim()
+    
+        user.Finalizado = (
+          finalizado.includes('CANCELADO') ||
+          finalizado === '' || 
+          /^[\?]+$/.test(finalizado)
+        ) ? false : finalizado
+      })
+    
+      const usersThatHaveNotBeenFinalized = users.filter(user => {
+        const finalizado = user.Finalizado
+        return finalizado === false
+      })
+      .map(user => ({
+        Nome: user.Nome,
+        Whatsapp: user.Whatsapp.replace(/\D/g, '')
+      }))
+
+    app.get('/', (req, res) => {
+        res.send(JSON.stringify(usersThatHaveNotBeenFinalized))
+    })
+})()
