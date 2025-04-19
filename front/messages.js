@@ -1,9 +1,19 @@
-import { formatTime } from './utils.js';
 import { updateSidebar } from './contacts.js';
 
 export const allMessages = [];
 let filter = null;
 let selected = null;
+
+fetch('http://localhost:5000/messages')
+    .then(res => res.json())
+    .then(messages => {
+        messages.forEach(msg => {
+            msg.timestamp = new Date(msg.timestamp);
+            allMessages.push(msg);
+            updateSidebar(msg.from, msg.timestamp);
+        });
+        renderMessages();
+    });
 
 export function selectedPhoneNumber() {
     return selected;

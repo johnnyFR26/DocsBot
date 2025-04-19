@@ -1,5 +1,6 @@
 const { Client } = require('whatsapp-web.js');
 const express = require('express');
+const { saveMessage, getAllMessages } = require('./db');
 const http = require('http');
 const WebSocket = require('ws');
 const File = require("../read_file")
@@ -15,7 +16,6 @@ const wss = new WebSocket.Server({ server });
 
 const whatsappClient = new Client();
 
-// Enviar o QR code via WebSocket
 whatsappClient.on('qr', (qr) => {
     wss.clients.forEach((ws) => {
         if (ws.readyState === WebSocket.OPEN) {
@@ -24,7 +24,6 @@ whatsappClient.on('qr', (qr) => {
     });
 });
 
-// Notificar quando o cliente estiver pronto
 whatsappClient.on('ready', () => {
     console.log('Client is ready!');
     wss.clients.forEach((ws) => {
@@ -34,21 +33,38 @@ whatsappClient.on('ready', () => {
     });
 });
 
-// Escutar e enviar as mensagens recebidas via WebSocket
 whatsappClient.on('message', message => {
     console.log(`Mensagem recebida: ${message.body}`);
+
+    const timestamp = new Date().toISOString();
+
+    saveMessage(message.from, message.body, timestamp);
+
     wss.clients.forEach((ws) => {
         if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({
                 type: 'message',
                 from: message.from,
-                body: message.body
+                body: message.body,
+                timestamp
             }));
         }
     });
 });
 
-// Receber mensagens e números do frontend e enviá-las via WhatsApp
+app.get('/messages', (req, res) => {
+    const messages = getAllMessages();
+
+    const formattedMessages = messages.map(msg => ({
+        id: msg.id,
+        from: msg.from_number,
+        body: msg.body,
+        timestamp: msg.timestamp
+    }));
+
+    res.json(formattedMessages);
+});
+
 wss.on('connection', (ws) => {
     ws.on('message', (data) => {
         const messageData = JSON.parse(data);
@@ -67,7 +83,6 @@ wss.on('connection', (ws) => {
     });
 });
 
-// Inicializar o cliente WhatsApp
 whatsappClient.initialize();
 
 server.listen(5000, () => {

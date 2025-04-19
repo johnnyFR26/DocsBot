@@ -1,7 +1,6 @@
 const { readFile } = require('fs/promises')
 const { error } = require('./constants')
 
-// novos campos que queremos no resultado final
 const FIELDS_TO_PROCESS = ['Finalizado', 'Nome', 'Whatsapp']
 
 class File {
@@ -26,7 +25,7 @@ class File {
   }
 
   static parseCSVToJSON(csvString) {
-    const lines = csvString.split(/\r?\n/).filter(Boolean) // remove linhas vazias
+    const lines = csvString.split(/\r?\n/).filter(Boolean)
     const header = lines.shift().split(',')
 
     const indexesToExtract = FIELDS_TO_PROCESS.map(field => header.indexOf(field))

@@ -3,7 +3,7 @@ import { socket } from './socket.js';
 export let clientstosend = [];
 
 export function fetchClients() {
-    fetch('http://localhost:5000')
+    fetch('http://192.168.0.211:5000/')
         .then(res => res.json())
         .then(data => {
             clientstosend = data;
