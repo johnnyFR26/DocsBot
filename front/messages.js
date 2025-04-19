@@ -4,7 +4,7 @@ export const allMessages = [];
 let filter = null;
 let selected = null;
 
-fetch('http://localhost:5000/messages')
+fetch('http://192.168.0.211:5000/messages')
     .then(res => res.json())
     .then(messages => {
         messages.forEach(msg => {

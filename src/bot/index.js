@@ -38,6 +38,10 @@ whatsappClient.on('message', message => {
 
     const timestamp = new Date().toISOString();
 
+    if(message.from === 'status@broadcast'){
+        return
+    }
+
     saveMessage(message.from, message.body, timestamp);
 
     wss.clients.forEach((ws) => {
