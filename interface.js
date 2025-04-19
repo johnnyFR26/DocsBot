@@ -14,7 +14,7 @@ let currentFilter = null;
 
 callButton.addEventListener('click', callClients);
 
-fetch('http://192.168.0.211:5000')
+fetch('http://localhost:5000')
     .then(response => response.json())
     .then(data => {
         clientstosend = data;
@@ -22,7 +22,7 @@ fetch('http://192.168.0.211:5000')
     });
 
 // Conectar ao WebSocket do servidor
-const socket = new WebSocket('ws://192.168.0.211:5000');
+const socket = new WebSocket('ws://localhost:5000');
 
 socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -165,3 +165,49 @@ clearFilterButton.addEventListener('click', () => {
 });
 
 
+const suggestionsBox = document.getElementById('suggestions-box');
+const predefinedMessages = [
+    "Olá! Tudo bem? 😊",
+    "Podemos te ajudar com algo?",
+    "Seu pedido já está a caminho!",
+    "Você gostaria de saber mais sobre nossos planos?",
+    "Obrigado por entrar em contato conosco!"
+];
+
+messageInput.addEventListener('keydown', (e) => {
+    if (e.key === '/') {
+        showSuggestions();
+    }
+
+    // Esc fecha o box
+    if (e.key === 'Escape') {
+        hideSuggestions();
+    }
+});
+
+function showSuggestions() {
+    suggestionsBox.classList.remove('hidden');
+    suggestionsBox.innerHTML = `
+        <ul>
+            ${predefinedMessages.map(msg => `<li>${msg}</li>`).join('')}
+        </ul>
+    `;
+
+    // Posicionar abaixo do textarea
+    const rect = messageInput.getBoundingClientRect();
+    suggestionsBox.style.top = `${rect.bottom + window.scrollY}px`;
+    suggestionsBox.style.left = `${rect.left + window.scrollX}px`;
+
+    // Add evento de clique
+    suggestionsBox.querySelectorAll('li').forEach(li => {
+        li.addEventListener('click', () => {
+            messageInput.value = li.innerText;
+            hideSuggestions();
+            messageInput.focus();
+        });
+    });
+}
+
+function hideSuggestions() {
+    suggestionsBox.classList.add('hidden');
+}
