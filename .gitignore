@@ -2,3 +2,4 @@ node_modules
 csv
 .wwebjs_cache
 database/messages.db
+audios

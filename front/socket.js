@@ -4,7 +4,7 @@ import { showQRCode, showStatus } from './dom.js';
 export let socket = null;
 
 export function initSocket() {
-    socket = new WebSocket('ws://192.168.0.211:5000');
+    socket = new WebSocket('https://5250-2804-14d-7e51-83f7-8978-a103-cfc7-ab93.ngrok-free.app');
 
     socket.onopen = () => console.log('Conectado ao WebSocket');
     socket.onclose = () => console.log('Desconectado do WebSocket');

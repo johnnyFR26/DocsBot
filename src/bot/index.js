@@ -1,16 +1,22 @@
 const { Client } = require('whatsapp-web.js');
 const express = require('express');
-const { saveMessage, getAllMessages } = require('./db');
 const http = require('http');
 const WebSocket = require('ws');
 const File = require("../read_file")
 const cors = require('cors');
-
+const fs = require('fs');
+const path = require('path');
+const { getAllMessages, saveMessage } = require('./db');
 
 const app = express();
-app.use(cors({
-    origin: '*'
-}));
+app.use(cors({ origin: '*' }));
+app.use('/audios', express.static(path.join(__dirname, '../../audios')));
+
+app.get('/messages', async (req, res) => {
+    const messages = await getAllMessages();
+    res.json(messages);
+})
+
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
@@ -33,40 +39,58 @@ whatsappClient.on('ready', () => {
     });
 });
 
-whatsappClient.on('message', message => {
-    console.log(`Mensagem recebida: ${message.body}`);
+whatsappClient.on('message', async message => {
+    console.log(`Mensagem recebida de ${message.from}`);
+
+    if(message.from == 'status@broadcast') {
+        return;
+    }
 
     const timestamp = new Date().toISOString();
 
-    if(message.from === 'status@broadcast'){
-        return
+    if (!message.hasMedia) {
+        saveMessage(message.from, message.body, timestamp);
+
+        wss.clients.forEach((ws) => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'message',
+                    from: message.from,
+                    body: message.body,
+                    timestamp,
+                    type: 'text'
+                }));
+            }
+        });
+        return;
     }
 
-    saveMessage(message.from, message.body, timestamp);
+    const media = await message.downloadMedia();
+    if (!media) return;
 
-    wss.clients.forEach((ws) => {
-        if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-                type: 'message',
-                from: message.from,
-                body: message.body,
-                timestamp
-            }));
-        }
-    });
-});
+    if (media.mimetype.startsWith('audio/')) {
+        const buffer = Buffer.from(media.data, 'base64');
+        const filename = `audio-${Date.now()}.ogg`;
+        const filePath = path.join(__dirname, '../../audios', filename);
 
-app.get('/messages', (req, res) => {
-    const messages = getAllMessages();
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        fs.writeFileSync(filePath, buffer);
 
-    const formattedMessages = messages.map(msg => ({
-        id: msg.id,
-        from: msg.from_number,
-        body: msg.body,
-        timestamp: msg.timestamp
-    }));
+        const url = `/audios/${filename}`;
+        saveMessage(message.from, null, timestamp, 'audio', url);
 
-    res.json(formattedMessages);
+        wss.clients.forEach((ws) => {
+            if (ws.readyState === WebSocket.OPEN) {
+                console.log(`Mensagem de áudio recebida de ${message.from}`);
+                ws.send(JSON.stringify({
+                    type: 'audio',
+                    from: message.from,
+                    timestamp,
+                    url
+                }));
+            }
+        });
+    }
 });
 
 wss.on('connection', (ws) => {
@@ -74,7 +98,7 @@ wss.on('connection', (ws) => {
         const messageData = JSON.parse(data);
         if (messageData.type === 'send_message') {
             const { message, phoneNumber } = messageData;
-            const chatId = `${phoneNumber}@c.us`;  // Número de WhatsApp formatado
+            const chatId = `${phoneNumber}@c.us`;
 
             whatsappClient.sendMessage(chatId, message).then(response => {
                 console.log('Mensagem enviada com sucesso:', response);
@@ -94,28 +118,26 @@ server.listen(5000, () => {
 });
 
 (async () => {
-    const filePath = './csv/abril_2025.csv'
-    const users = await File.csvToJSON(filePath)
+    const filePath = './csv/abril_2025.csv';
+    const users = await File.csvToJSON(filePath);
+
     users.forEach(user => {
-        const finalizado = user.Finalizado.trim()
-    
+        const finalizado = user.Finalizado.trim();
         user.Finalizado = (
-          finalizado.includes('CANCELADO') ||
-          finalizado === '' || 
-          /^[\?]+$/.test(finalizado)
-        ) ? false : finalizado
-      })
-    
-      const usersThatHaveNotBeenFinalized = users.filter(user => {
-        const finalizado = user.Finalizado
-        return finalizado === false
-      })
-      .map(user => ({
+            finalizado.includes('CANCELADO') ||
+            finalizado === '' || 
+            /^[\?]+$/.test(finalizado)
+        ) ? false : finalizado;
+    });
+
+    const usersThatHaveNotBeenFinalized = users.filter(user => {
+        return user.Finalizado === false;
+    }).map(user => ({
         Nome: user.Nome,
         Whatsapp: user.Whatsapp.replace(/\D/g, '')
-      }))
+    }));
 
     app.get('/', (req, res) => {
-        res.send(JSON.stringify(usersThatHaveNotBeenFinalized))
-    })
-})()
+        res.send(JSON.stringify(usersThatHaveNotBeenFinalized));
+    });
+})();

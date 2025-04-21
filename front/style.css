@@ -65,7 +65,6 @@ body {
   }
 
   #call-button {
-    display: none;
     background-color: red;
     height: 90px;
     width: 110px;

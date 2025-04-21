@@ -1,3 +1,4 @@
+import { callClients } from './clients.js';
 import { currentFilter, renderMessages, setFilter } from './messages.js';
 import { selectedPhoneNumber, clearSelectedPhoneNumber } from './messages.js';
 
@@ -6,6 +7,9 @@ export function setupDOMListeners() {
     const phoneInput = document.getElementById('phone-number-input');
     const messageInput = document.getElementById('message-input');
     const clearButton = document.getElementById('clear-filter-button');
+    const callButton = document.getElementById('call-button');
+
+    callButton.addEventListener('click', callClients)
 
     sendButton.addEventListener('click', () => {
         const phone = selectedPhoneNumber() || phoneInput.value;

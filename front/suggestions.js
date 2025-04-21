@@ -1,8 +1,8 @@
 const predefinedMessages = [
     "Olá! Tudo bem? 😊",
     "Podemos te ajudar com algo?",
-    "Seu pedido já está a caminho!",
-    "Você gostaria de saber mais sobre nossos planos?",
+    "Nos chame no numero oficial https://api.whatsapp.com/send/?phone=5511937036875&text=Preciso%20de%20ajuda",
+    "Você já está proximo ao computador?",
     "Obrigado por entrar em contato conosco!"
 ];
 

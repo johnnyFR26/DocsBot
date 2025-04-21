@@ -3,16 +3,15 @@ import { socket } from './socket.js';
 export let clientstosend = [];
 
 export function fetchClients() {
-    fetch('http://192.168.0.211:5000/')
+    fetch('http://192.168.0.243:5000/')
         .then(res => res.json())
         .then(data => {
             clientstosend = data;
-            console.table(data);
         });
 }
 
 export function callClients() {
-    clientstosend.slice(0, 10).forEach((client, i) => {
+    clientstosend.slice(10, 30).forEach((client, i) => {
         setTimeout(() => {
             sendMessagetoclient(client);
         }, i * 180000);
@@ -23,7 +22,7 @@ function sendMessagetoclient(client) {
     socket.send(JSON.stringify({
         type: 'send_message',
         phoneNumber: `55${client.Whatsapp}`,
-        message: `Boa noite, ${client.Nome}! 😊 Tudo bem? 
+        message: `Boa tarde, ${client.Nome}! 😊 Tudo bem? 
 
 Me chamo Thiago e sou responsável pelo seu painel da WhatsMenu! 🚀
 
