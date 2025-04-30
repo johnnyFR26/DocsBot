@@ -6,7 +6,7 @@ let selected = null;
 const BACKEND_URL = 'http://192.168.0.243:5000';
 
 
-fetch('http://192.168.0.243:5000/messages')
+fetch('http://192.168.0.26:5000/messages')
     .then(res => res.json())
     .then(messages => {
         messages.forEach(msg => {

@@ -4,7 +4,7 @@ import { showQRCode, showStatus } from './dom.js';
 export let socket = null;
 
 export function initSocket() {
-    socket = new WebSocket('ws://192.168.0.243:5000');
+    socket = new WebSocket('ws://192.168.0.26:5000');
 
     socket.onopen = () => console.log('Conectado ao WebSocket');
     socket.onclose = () => console.log('Desconectado do WebSocket');
