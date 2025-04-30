@@ -39,6 +39,7 @@ export function setupAudioRecorder() {
         mediaRecorder.stop();
         startBtn.disabled = false;
         stopBtn.disabled = true;
+        document.getElementById('message-input').style.display = 'none';
     };
     
     function sendAudio(audioBlob) {

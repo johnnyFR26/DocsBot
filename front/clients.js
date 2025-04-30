@@ -11,7 +11,7 @@ export function fetchClients() {
 }
 
 export function callClients() {
-    clientstosend.slice(10, 30).forEach((client, i) => {
+    clientstosend.slice(20, 30).forEach((client, i) => {
         setTimeout(() => {
             sendMessagetoclient(client);
         }, i * 180000);

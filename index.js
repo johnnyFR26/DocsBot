@@ -1,14 +1,13 @@
 const File = require("./src/read_file")
 
 ;(async () => {
-  const filePath = './csv/abril_2025.csv'
+  const filePath = './csv/marco_2025.csv'
   const users = await File.csvToJSON(filePath)
 
   users.forEach(user => {
     const finalizado = user.Finalizado.trim()
 
     user.Finalizado = (
-      finalizado.includes('CANCELADO') ||
       finalizado === '' || 
       /^[\?]+$/.test(finalizado)
     ) ? false : finalizado

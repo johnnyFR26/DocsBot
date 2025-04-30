@@ -49,15 +49,7 @@ whatsappClient.on('message', async message => {
     const timestamp = new Date().toISOString();
 
     if (!message.hasMedia) {
-        saveMessage(message.from, message.body, timestamp);
-
-        wss.clients.forEach((ws) => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'message',
-                    from: message.from,
-                    body: message.body,
-                    timestamp,
+        saveMessage(message.from, message.body, timestamp); wss.clients.forEach((ws) => { if (ws.readyState === WebSocket.OPEN) { ws.send(JSON.stringify({ type: 'message', from: message.from, body: message.body, timestamp,
                     type: 'text'
                 }));
             }
@@ -118,13 +110,18 @@ server.listen(5000, () => {
 });
 
 (async () => {
-    const filePath = './csv/abril_2025.csv';
+    const filePath = './csv/marco_2025.csv';
     const users = await File.csvToJSON(filePath);
 
     users.forEach(user => {
+        const name = user.Nome?.trim();
+        user.Nome = (
+            name === '' || 
+            /^[\?]+$/.test(name)
+        ) ? "" : name;
+
         const finalizado = user.Finalizado.trim();
         user.Finalizado = (
-            finalizado.includes('CANCELADO') ||
             finalizado === '' || 
             /^[\?]+$/.test(finalizado)
         ) ? false : finalizado;
@@ -138,6 +135,6 @@ server.listen(5000, () => {
     }));
 
     app.get('/', (req, res) => {
-        res.send(JSON.stringify(usersThatHaveNotBeenFinalized));
+        res.send(usersThatHaveNotBeenFinalized);
     });
 })();
